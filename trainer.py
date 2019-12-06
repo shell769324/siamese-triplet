@@ -2,8 +2,10 @@ import torch
 import numpy as np
 
 
-def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs, cuda, log_interval, metrics=[],
+
+def fit(train_loader, val_loader, dataloader, refloader, model, loss_fn, optimizer, scheduler, n_epochs, cuda, log_interval, metrics=[],
         start_epoch=0):
+    text_file = open("triplet_50.txt", "w")
     """
     Loaders, model, loss function and metrics should work together for a given task,
     i.e. The model should be able to process data output of loaders,
@@ -25,8 +27,10 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
         message = 'Epoch: {}/{}. Train set: Average loss: {:.4f}'.format(epoch + 1, n_epochs, train_loss)
         for metric in metrics:
             message += '\t{}: {}'.format(metric.name(), metric.value())
-
-        val_loss, metrics = test_epoch(val_loader, model, loss_fn, cuda, metrics)
+        calcAcc = False
+        if epoch%5 == 0:
+            calcAcc = True
+        val_loss, metrics = test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics, calcAcc, text_file)
         val_loss /= len(val_loader)
 
         message += '\nEpoch: {}/{}. Validation set: Average loss: {:.4f}'.format(epoch + 1, n_epochs,
@@ -90,8 +94,9 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
     return total_loss, metrics
 
 
-def test_epoch(val_loader, model, loss_fn, cuda, metrics):
+def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics, calcAcc, text_file):
     with torch.no_grad():
+        embed_d = 3
         for metric in metrics:
             metric.reset()
         model.eval()
@@ -120,5 +125,58 @@ def test_epoch(val_loader, model, loss_fn, cuda, metrics):
 
             for metric in metrics:
                 metric(outputs, target, loss_outputs)
-
+        if calcAcc:
+            embeddings = np.zeros((len(dataloader.dataset), embed_d))
+            labels = np.zeros(len(dataloader.dataset))
+            k = 0
+            
+            # get the dataset rather than dataloader so the labels are consistent
+            class_of_test_data = dataloader.dataset.classes
+            idx_to_class = dict()
+            for images, target in dataloader:
+                if cuda:
+                    images = images.cuda()
+                embeddings[k:k+len(images)] = model.get_embedding(images).data.cpu().numpy()
+                labels[k:k+len(images)] = target.numpy()
+                targ = target.numpy()
+                for id_ in target:
+                    for class_ in class_of_test_data:
+                        if id_ == dataloader.dataset.class_to_idx[class_]:
+                            idx_to_class[k] = class_
+                    k += 1
+            ref_embeddings = np.zeros((len(refloader.dataset), embed_d))
+            k = 0
+            ref_idx_to_class = dict()
+            for images, target in refloader:
+                if cuda:
+                    images = images.cuda()
+                ref_embeddings[k:k+len(images)] = model.get_embedding(images).data.cpu().numpy()
+                target = target.numpy()
+                for id_ in target:
+                    for class_ in refloader.dataset.classes:
+                        if id_ == refloader.dataset.class_to_idx[class_]:
+                            ref_idx_to_class[k] = class_
+                    k+= 1
+                #k += len(images)
+            correct = 0
+            for i in range(len(embeddings)):
+                embedding = embeddings[i]
+                min_dist = float("inf")
+                predicted_class = -1
+                for j, ref_embedding in enumerate(ref_embeddings):
+                    # EMBEDDING COMPARISON
+                    curr_dist = np.linalg.norm(embedding - ref_embedding)
+                    if curr_dist < min_dist:
+                        min_dist = curr_dist
+                        predicted_class = j
+                target_label = idx_to_class[i]
+                predicted_label = ref_idx_to_class[predicted_class]
+                print('predicted', predicted_label)
+                print('target', target_label)
+                if predicted_class == target_label:
+                    correct += 1
+            
+            validation_accuracy = float(correct)/len(dataloader.dataset)
+            print(validation_accuracy, val_loss, file = text_file)
+            print("accuracy", validation_accuracy)
     return val_loss, metrics
