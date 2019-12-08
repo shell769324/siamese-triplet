@@ -104,14 +104,12 @@ class TripletNet(nn.Module):
     def __init__(self, embedding_net):
         super(TripletNet, self).__init__()
         self.embedding_net = embedding_net
-        self.fc1 = nn.Linear(1000, 1000)
-        self.fc2 = nn.Linear(1000, 3)
 
     def forward(self, x1, x2, x3):
-        output1 = self.fc2(F.relu(self.embedding_net(x1)))
-        output2 = self.fc2(F.relu(self.embedding_net(x2)))
-        output3 = self.fc2(F.relu(self.embedding_net(x3)))
+        output1 = self.embedding_net(x1)
+        output2 = self.embedding_net(x2)
+        output3 = self.embedding_net(x3)
         return output1, output2, output3
 
     def get_embedding(self, x):
-        return self.fc2(F.relu(self.embedding_net(x)))
+        return self.embedding_net(x)

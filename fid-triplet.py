@@ -50,7 +50,7 @@ train_dataset = torchvision.datasets.ImageFolder(
     )
 )
 test_dataset = torchvision.datasets.ImageFolder(
-    root = './FID-prepped/test',
+    root = './FID-prepped/train',
     transform=transforms.Compose(
         [
         torchvision.transforms.Resize((224,224)),
@@ -109,7 +109,7 @@ for child in model.children():
     count += 1
 i = 0
 for child in model.children():
-    if i < count - 3:
+    if i < count - 1:
         for param in child.parameters():
             param.requires_grad = False
     i += 1

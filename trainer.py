@@ -96,7 +96,7 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
 
 def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics, calcAcc, text_file):
     with torch.no_grad():
-        embed_d = 3
+        embed_d = 1000
         for metric in metrics:
             metric.reset()
         model.eval()
@@ -173,7 +173,7 @@ def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics,
                 predicted_label = ref_idx_to_class[predicted_class]
                 print('predicted', predicted_label)
                 print('target', target_label)
-                if predicted_class == target_label:
+                if predicted_label == target_label:
                     correct += 1
             
             validation_accuracy = float(correct)/len(dataloader.dataset)
