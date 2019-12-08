@@ -50,7 +50,7 @@ train_dataset = torchvision.datasets.ImageFolder(
     )
 )
 test_dataset = torchvision.datasets.ImageFolder(
-    root = './FID-prepped/train',
+    root = './FID-prepped/test',
     transform=transforms.Compose(
         [
         torchvision.transforms.Resize((224,224)),
@@ -105,17 +105,20 @@ print(model)
 if cuda:
     model.cuda()
 
+model.embedding_net.fc.weight.requires_grad = False
+model.embedding_net.fc.bias.requires_grad = False
+'''
 for child in model.children():
     count += 1
 i = 0
 for child in model.children():
-    if i < count - 1:
+    if i < count:
         for param in child.parameters():
             param.requires_grad = False
     i += 1
-
+'''
 loss_fn = TripletLoss(margin)
-lr = 1e-5
+lr = 1e-4
 optimizer = optim.Adam(model.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 30, gamma=0.1, last_epoch=-1)
 n_epochs = 1000000
