@@ -87,7 +87,7 @@ margin = 100.
 #embedding_net = EmbeddingNet()
 import torchvision.models as models
 # THE MODEL
-resnet = models.resnet18(pretrained = True)
+resnet = models.resnet18(pretrained = True, requires_grad = False)
 #num_ftrs = resnet.fc.in_features
 #resnet.fc = nn.Linear(num_ftrs, 3)
 count = 0
@@ -105,8 +105,8 @@ print(model)
 if cuda:
     model.cuda()
 
-model.embedding_net.fc.weight.requires_grad = False
-model.embedding_net.fc.bias.requires_grad = False
+#model.embedding_net.fc.weight.requires_grad = False
+#model.embedding_net.fc.bias.requires_grad = False
 '''
 for child in model.children():
     count += 1
