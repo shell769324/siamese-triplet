@@ -19,6 +19,8 @@ from networks import EmbeddingNet, ClassificationNet
 from metrics import AccumulatedAccuracyMetric
 from datasets import TripletFolder
 batch_size = 32
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 kwargs = {'num_workers': 0, 'pin_memory': True} if cuda else {}
 
 def extract_embeddings(dataloader, model):
@@ -41,7 +43,7 @@ train_dataset = torchvision.datasets.ImageFolder(
     transform=transforms.Compose(
         [
          
-        torchvision.transforms.Resize((224,224)),
+        torchvision.transforms.Resize((224,400)),
         torchvision.transforms.RandomRotation(3),
          torchvision.transforms.ToTensor(),
          transforms.Lambda(lambda x: x/255.),   
@@ -53,7 +55,7 @@ test_dataset = torchvision.datasets.ImageFolder(
     root = './FID-prepped/test',
     transform=transforms.Compose(
         [
-        torchvision.transforms.Resize((224,224)),
+        torchvision.transforms.Resize((224,400)),
          torchvision.transforms.ToTensor(),
          transforms.Lambda(lambda x: x/255.),   
          normalize,
@@ -65,7 +67,7 @@ ref_dataset = torchvision.datasets.ImageFolder(
     root = './FID-prepped/ref',
     transform=transforms.Compose(
         [
-        torchvision.transforms.Resize((224,224)),
+        torchvision.transforms.Resize((224,400)),
          torchvision.transforms.ToTensor(),
          transforms.Lambda(lambda x: x/255.),   
          normalize,
@@ -87,7 +89,7 @@ margin = 100.
 #embedding_net = EmbeddingNet()
 import torchvision.models as models
 # THE MODEL
-resnet = models.resnet18(pretrained = True, requires_grad = False)
+resnet = models.resnet18(pretrained = True)
 #num_ftrs = resnet.fc.in_features
 #resnet.fc = nn.Linear(num_ftrs, 3)
 count = 0

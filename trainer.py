@@ -146,37 +146,29 @@ def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics,
                     k += 1
             ref_embeddings = np.zeros((len(refloader.dataset), embed_d))
             k = 0
-            ref_idx_to_class = dict()
+            ref_idx_to_class = {i : str(i + 1).zfill(5) for i in range(1176)}
             for images, target in refloader:
                 if cuda:
                     images = images.cuda()
                 ref_embeddings[k:k+len(images)] = model.get_embedding(images).data.cpu().numpy()
                 target = target.numpy()
-                for id_ in target:
-                    for class_ in refloader.dataset.classes:
-                        if id_ == refloader.dataset.class_to_idx[class_]:
-                            ref_idx_to_class[k] = class_
-                    k+= 1
-                #k += len(images)
-            correct = 0
+                k += len(target)
+
+            ranks = []
             for i in range(len(embeddings)):
                 embedding = embeddings[i]
-                min_dist = float("inf")
-                predicted_class = -1
+                rank = 0
+                for j, ref_embedding in enumerate(ref_embeddings):
+                    if ref_idx_to_class[j] == idx_to_class[i]:
+                        t_dist = np.linalg.norm(embedding - ref_embedding)
+                        break
                 for j, ref_embedding in enumerate(ref_embeddings):
                     # EMBEDDING COMPARISON
                     curr_dist = np.linalg.norm(embedding - ref_embedding)
-                    if curr_dist < min_dist:
-                        min_dist = curr_dist
-                        predicted_class = j
-                target_label = idx_to_class[i]
-                predicted_label = ref_idx_to_class[predicted_class]
-                print('predicted', predicted_label)
-                print('target', target_label)
-                if predicted_label == target_label:
-                    correct += 1
-            
-            validation_accuracy = float(correct)/len(dataloader.dataset)
-            print(validation_accuracy, val_loss, file = text_file)
-            print("accuracy", validation_accuracy)
+                    if curr_dist < t_dist:
+                        rank += 1
+                ranks.append(rank)
+            print(ranks)
+
+            print(ranks, val_loss, file = text_file)
     return val_loss, metrics
