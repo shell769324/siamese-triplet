@@ -175,5 +175,5 @@ def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics,
                 ranks.append(rank)
             print(ranks)
 
-            print(ranks, val_loss, file = text_file)
+            print(ranks, val_loss)
     return val_loss, metrics
