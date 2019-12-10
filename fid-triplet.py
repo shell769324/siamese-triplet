@@ -11,6 +11,7 @@ from torch.autograd import Variable
 
 from trainer import fit
 import numpy as np
+import sys
 cuda = torch.cuda.is_available()
 
 import matplotlib
@@ -119,6 +120,7 @@ for child in model.children():
             param.requires_grad = False
     i += 1
 '''
+sys.stdout = open('result', 'w')
 loss_fn = TripletLoss(margin)
 lr = 1e-4
 optimizer = optim.Adam(model.parameters(), lr=lr)

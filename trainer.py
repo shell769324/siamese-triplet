@@ -15,6 +15,7 @@ def fit(train_loader, val_loader, dataloader, refloader, model, loss_fn, optimiz
     Siamese network: Siamese loader, siamese model, contrastive loss
     Online triplet learning: batch loader, embedding model, online triplet loss
     """
+
     for epoch in range(0, start_epoch):
         scheduler.step()
 
@@ -87,7 +88,7 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             for metric in metrics:
                 message += '\t{}: {}'.format(metric.name(), metric.value())
 
-            print(message)
+            #print(message)
             losses = []
 
     total_loss /= (batch_idx + 1)
@@ -146,13 +147,17 @@ def test_epoch(val_loader, dataloader, refloader, model, loss_fn, cuda, metrics,
                     k += 1
             ref_embeddings = np.zeros((len(refloader.dataset), embed_d))
             k = 0
-            ref_idx_to_class = {i : str(i + 1).zfill(5) for i in range(1176)}
+            ref_idx_to_class = dict()
             for images, target in refloader:
                 if cuda:
                     images = images.cuda()
-                ref_embeddings[k:k+len(images)] = model.get_embedding(images).data.cpu().numpy()
+                ref_embeddings[k:k + len(images)] = model.get_embedding(images).data.cpu().numpy()
                 target = target.numpy()
-                k += len(target)
+                for id_ in target:
+                    for class_ in refloader.dataset.classes:
+                        if id_ == refloader.dataset.class_to_idx[class_]:
+                            ref_idx_to_class[k] = class_
+                    k += 1
 
             ranks = []
             for i in range(len(embeddings)):
